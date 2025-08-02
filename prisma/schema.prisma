@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  email       String   @unique
+  password    String
+  role        String   @default("user")
+
+  // 1-to-1: User can own a Company
+  ownedCompany Company? @relation("CompanyOwner")  // reverse relation from Company.owner
+}
+
+model Company {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String
+  location    String
+  logo        String?
+
+  // 1-to-many: A company can have many jobs
+  jobs        Job[]    @relation("CompanyJobs")
+
+  // 1-to-1: Company belongs to a User
+  ownerId     String   @unique @db.ObjectId
+  owner       User     @relation("CompanyOwner", fields: [ownerId], references: [id])
+}
+
+model Job {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  description     String
+  location        String
+  salary          Int
+  employment_type String   @default("fulltime")
+  job_type        String   @default("on-site")
+
+  // 1-to-1: Each job belongs to a company
+  company_id      String   @db.ObjectId
+  company         Company  @relation("CompanyJobs", fields: [company_id], references: [id])
+}
+
