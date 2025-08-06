@@ -2,12 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  SearchIcon,
   ChevronDown,
   User,
   Bookmark,
   LogOut,
   Settings,
+  SquaresUnite as SquaresUniteIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -18,16 +18,15 @@ import CustomButton from "./button";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import JobLogo from "./JobLogo";
-import { suggestJobs } from "@/action/job.action";
+import SearchBar from "./search-bar";
+import { useCompany } from "@/context/CompanyContext";
 
 function Header() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [suggestions, setSuggestions] = useState<{ id: string; title: string }[]>([]);
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const { user, setUser } = useAuth();
+  const { setCompany, setHasCompany } = useCompany();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -46,40 +45,27 @@ function Header() {
     fetchUser();
   }, [user, setUser]);
 
-
-  useEffect(()=>{
-    const timer = setTimeout(() => {
-      setDebouncedQuery(searchQuery)
-    }, 500);
-    return  () =>{
-      clearTimeout(timer)
-    } 
-  },[searchQuery])
-
-
-  useEffect(()=>{
-    const getSuggestions = async () =>{
-      if(debouncedQuery.trim() === "") {
-        setSuggestions([]);
-        return;
-      }
+  // Fetch company data when user is available
+  useEffect(() => {
+    const fetchCompany = async () => {
+      if (!user?.id) return;
 
       try {
-        const data = await suggestJobs(debouncedQuery);
-        
-        if (data.success) {
-          setSuggestions(data.suggestions ?? []);
-        } else {
-          console.error("Failed to fetch suggestions:", data.message);
-          setSuggestions([]);
+        const response = await fetch(`/api/company?ownerId=${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setHasCompany(data.hasCompany);
+          setCompany(data.company);
         }
       } catch (error) {
-        console.error("Error fetching job suggestions:", error);
-        setSuggestions([]);
+        console.error("Error fetching company:", error);
+        setHasCompany(false);
+        setCompany(null);
       }
-    }
-    getSuggestions();
-  },[debouncedQuery])
+    };
+
+    fetchCompany();
+  }, [user?.id, setCompany, setHasCompany]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -93,19 +79,6 @@ function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleClick = () => {
-    if (searchQuery.trim()) {
-      console.log(searchQuery);
-      router.push(`/?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleClick();
-    }
-  };
 
   const handleLogout = async () => {
     try {
@@ -132,14 +105,12 @@ function Header() {
       .slice(0, 2);
   };
 
-  
-
   return (
     <div className="flex fixed top-0 w-full font-poppins py-4 px-4 md:px-24 justify-between items-center backdrop-blur bg-card/95 z-50 shadow-lg rounded-b-2xl border-b border-border">
       <Link href={"/"}>
         <div className="flex gap-3 items-center">
           <div className="relative">
-            <JobLogo/>
+            <JobLogo />
           </div>
           <h1 className="font-bold text-2xl max-sm:hidden tracking-wide text-card-foreground drop-shadow">
             JobHunt
@@ -147,42 +118,8 @@ function Header() {
         </div>
       </Link>
 
-      <div className="flex flex-1 max-w-[600px] items-center bg-muted rounded-full px-3 py-1 shadow-inner border border-border mx-4 min-w-[220px] relative">
-        <input
-          type="text"
-          className="bg-transparent border-none outline-none text-lg px-2 py-1 text-card-foreground placeholder:text-muted-foreground flex-1"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={handleKeyPress}
-          placeholder="Search jobs..."
-        />
-        <button
-          onClick={handleClick}
-          className="rounded-full p-2 hover:bg-primary hover:text-primary-foreground transition-colors duration-150 text-muted-foreground"
-          disabled={!searchQuery.trim()}
-        >
-          <SearchIcon size={18} />
-        </button>
-
-        {/* Suggestions Dropdown */}
-        {suggestions.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-lg py-2 z-50">
-            {suggestions.map((suggestion) => (
-              <div
-                key={suggestion.id}
-                className="px-4 py-2 hover:bg-muted transition-colors duration-150 cursor-pointer text-card-foreground"
-                onClick={() => {
-                  setSearchQuery(suggestion.title);
-                  setSuggestions([]);
-                  router.push(`/?q=${encodeURIComponent(suggestion.title)}`);
-                }}
-              >
-                {suggestion.title}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Search Bar */}
+      <SearchBar />
 
       {/* Menus */}
       <div className="flex items-center gap-4">
@@ -288,6 +225,15 @@ function Header() {
                   >
                     <Settings size={18} className="text-muted-foreground" />
                     <span>Settings</span>
+                  </Link>
+
+                  <Link
+                    href="/add-company"
+                    onClick={() => setIsDropdownOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-card-foreground hover:bg-muted transition-colors duration-150"
+                  >
+                    <SquaresUniteIcon size={18} className="text-muted-foreground" />
+                    <span>Add Company</span>
                   </Link>
 
                   {/* Divider */}

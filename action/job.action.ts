@@ -13,7 +13,7 @@ export async function getAllJobs(filters?: {
         
         const where: any = {};
         
-        
+
         if (filters?.employmentType) {
             where.employment_type = filters.employmentType;
         }

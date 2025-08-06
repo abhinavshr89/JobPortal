@@ -31,7 +31,7 @@ model Company {
   description String
   location    String
   logo        String?
-
+  
   // 1-to-many: A company can have many jobs
   jobs        Job[]    @relation("CompanyJobs")
 
@@ -53,4 +53,9 @@ model Job {
   company_id      String   @db.ObjectId
   company         Company  @relation("CompanyJobs", fields: [company_id], references: [id])
 }
+
+
+
+
+
 

@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Poppins } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "react-hot-toast";
+import { CompanyProvider } from "@/context/CompanyContext";
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
@@ -40,6 +41,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <AuthProvider>
+          <CompanyProvider>
          <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -50,6 +52,7 @@ export default function RootLayout({
             {children}
             <Toaster position="top-right" />
           </ThemeProvider>
+          </CompanyProvider>
         </AuthProvider>
       </body>
     </html>

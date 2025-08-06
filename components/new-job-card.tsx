@@ -1,7 +1,9 @@
+"use client"
 import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, DollarSign, Building2, Clock, ArrowUpRight } from "lucide-react"
+import { useRouter } from 'next/navigation';
 
 interface NewJobCardProps {
   job: {
@@ -16,6 +18,12 @@ interface NewJobCardProps {
 }
 
 function NewJobCard({ job }: NewJobCardProps) {
+  const router = useRouter();
+
+  const handleJobClick = () => {
+    router.push(`/job-details?id=${job.id}`);
+  };
+
   return (
     <Card className="group relative bg-card border border-border 
                      hover:border-ring hover:shadow-lg 
@@ -25,7 +33,8 @@ function NewJobCard({ job }: NewJobCardProps) {
                      before:absolute before:inset-0 before:bg-gradient-to-br 
                      before:from-primary/5 before:to-secondary/5 
                      before:opacity-0 hover:before:opacity-100 
-                     before:transition-opacity before:duration-300">
+                     before:transition-opacity before:duration-300"
+          onClick={handleJobClick}>
       
       {/* Subtle gradient overlay on hover */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r 
